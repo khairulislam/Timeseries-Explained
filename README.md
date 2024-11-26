@@ -3,9 +3,11 @@
 Interpreting the model's behavior is important in understanding decision-making in practice. However, explaining complex time series forecasting models faces challenges due to temporal dependencies between subsequent time steps and the varying importance of input features over time. Many time series forecasting models use input context with a look-back window for better prediction performance. However, the existing studies (1) do not consider the temporal dependencies among the feature vectors in the input window and (2) separately consider the time dimension that the feature dimension when calculating the importance scores. In this work, we propose a novel **Windowed Temporal Saliency Rescaling** method to address these issues. 
 
 ## Core Libraries
+
 The following libraries are used as a core in this framework.
 
 ### [Captum](https://captum.ai/docs/introduction)
+
 (“comprehension” in Latin) is an open source library for model interpretability built on PyTorch.
 
 ### [Time Interpret (tint)](https://josephenguehard.github.io/time_interpret/build/html/index.html)
@@ -16,11 +18,11 @@ Expands the Captum library with a specific focus on time-series. It includes var
 
 TSlib is an open-source library for deep learning researchers, especially deep time series analysis.
 
-
 ## Interpretation Methods
 
 The following local intepretation methods are supported at present:
 <details>
+
 1. *Feature Ablation* [[2017]](https://arxiv.org/abs/1705.08498)
 2. *Dyna Mask* [[ICML 2021]](https://arxiv.org/abs/2106.05303)
 3. *Extremal Mask* [[ICML 2023]](https://proceedings.mlr.press/v202/enguehard23a/enguehard23a.pdf)
@@ -28,12 +30,14 @@ The following local intepretation methods are supported at present:
 5. *Augmented Feature Occlusion* [[NeurIPS 2020]](https://proceedings.neurips.cc/paper/2020/file/08fa43588c2571ade19bc0fa5936e028-Paper.pdf)
 6. *Gradient Shap* [[NeurIPS 2017]](https://proceedings.neurips.cc/paper/2017/file/8a20a8621978632d76c43dfd28b67767-Paper.pdf)
 7. *Integreated Gradients* [[ICML 2017]](https://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)
-8. *WinIT* [[ICLR 2023 poster]](https://openreview.net/forum?id=C0q9oBc3n4)
-9.  *TSR* [[NeurIPS]](https://proceedings.neurips.cc/paper_files/paper/2020/file/47a3893cc405396a5c30d91320572d6d-Paper.pdf)
+8. *WinIT* [[ICLR 2023]](https://openreview.net/forum?id=C0q9oBc3n4)
+9. *TSR* [[NeurIPS]](https://proceedings.neurips.cc/paper_files/paper/2020/file/47a3893cc405396a5c30d91320572d6d-Paper.pdf)
 10. *WinTSR* - proposed new method
+
 </details>
 
-## Time Series Models 
+## Time Series Models
+
 This repository currently supports the following models:
 
 <details>
@@ -66,7 +70,7 @@ This repository currently supports the following models:
 
 Use the [run.py](/run.py) script to train and test the time series models. Check the [scripts](/scripts/) and [slurm](/slurm/) folder to see sample scripts. Make sure you have the datasets downloaded in the `dataset` folder following the `Datasets` section. Following is a sample code to train the electricity dataset using the DLinear model. To test an already trained model, just remove the `--train` parameter.
 
-```
+```bash
 python run.py \
   --task_name long_term_forecast \
   --train \
@@ -84,7 +88,7 @@ python run.py \
 
 Use the [interpret.py](/interpret.py) script to interpret a trained model. Check the [scripts](/scripts/) and [slurm](/slurm/) folder to see more sample scripts. Following is a sample code to interpret the `iTransformer` model trained on the electricity dataset using using some of the interpretation methods. This evaluates the 1st iteration among the default 3 in the result folder.
 
-```
+```bash
 python interpret.py \
   --task_name long_term_forecast \
   --explainers feature_ablation augmented_occlusion feature_permutation integrated_gradients gradient_shap wtsr\
@@ -119,14 +123,17 @@ This dataset [^2] records the road occupancy rates from different sensors on San
 MIMIC-III is a multivariate clinical time series dataset with a range of vital and lab measurements taken over time for around 40,000 patients at the Beth Israel Deaconess Medical Center in Boston, MA (Johnson et al. [^3], 2016). It is widely used in healthcare and medical AI-related research. There are multiple tasks associated, including mortality, length-of-stay prediction, and phenotyping. 
 
 <details>
+
 We follow the pre-processing procedure described in Tonekaboni et al. (2020) [^4] and use 8 vitals and 20 lab measurements hourly over a 48-hour period to predict patient mortality. For more visit the [source description](https://physionet.org/content/mimiciii/1.4/).
 
 This is a private dataset. Refer to [the official MIMIC-III documentation](https://mimic.mit.edu/iii/gettingstarted/dbsetup/). ReadMe and datagen of MIMIC is from [Dynamask Repo](https://github.com/JonathanCrabbe/Dynamask). This repository followed the database setup instructions from [the offficial site here](https://mimic.mit.edu/docs/gettingstarted/local/install-mimic-locally-windows/). 
 
 - Run this command to acquire the data and store it:
+  
    ```shell
    python -m data.mimic_iii.icu_mortality --sqluser YOUR_USER --sqlpass YOUR_PASSWORD
    ```
+
   If everything happens properly, two files named ``adult_icu_vital.gz`` and `adult_icu_lab.gz`
   are stored in `dataset/mimic_iii`.
 
@@ -156,12 +163,14 @@ sudo singularity build timeseries.sif singularity.def
 This will create a singularity container with name `timeseries.sif`. Note that, this requires `sudo` privilege.
 
 ### Option 2. Use Virtual Environment
+
 First create a virtual environment with the required libraries. For example, to create an venv named `ml`, you can either use the `Anaconda` library or your locally installed `python`. An example code using Anaconda,
 
-```
+```bash
 conda create -n ml python=3.10
 conda activate ml
 ```
+
 This will activate the venv `ml`. Install the required libraries,
 
 ```bash
@@ -178,6 +187,7 @@ print(f'Using {device} backend')
 ```
 
 If this fails to detect your GPU, install CUDA using,
+
 ```bash
 pip install torch==2.2 --index-url https://download.pytorch.org/whl/cu118
 ```
