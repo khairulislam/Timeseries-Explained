@@ -3,6 +3,8 @@ import numpy as np
 from utils.tools import reshape_over_output_horizon, round_up
 from pytorch_lightning import Trainer
 from exp.exp_basic import dual_input_users
+from attrs.gatemasknn import GateMaskNet
+from tint.models import MLP, RNN
 
 def get_total_data(dataloader, device, add_x_mark=True):        
     if add_x_mark:
@@ -218,6 +220,49 @@ def compute_attr(
             additional_forward_args=additional_forward_args,
             attributions_fn=abs
         )
+    elif name == 'gatemask':
+        trainer = Trainer(
+            logger=False, enable_checkpointing=False,
+            enable_progress_bar=False, max_epochs=5,
+            enable_model_summary=False,accelerator="auto"
+        )
+        
+        if type(inputs) == tuple:
+            new_additional_forward_args = tuple([
+                input for input in inputs[1:]
+            ]) + additional_forward_args
+            
+            # output is a tuple of length 1, since only one input is used
+            attr = explainer.attribute(
+                inputs=inputs[0],
+                baselines=baselines[0],
+                additional_forward_args=new_additional_forward_args,
+                # mask_net=mask, 
+                batch_size=args.batch_size,
+                trainer=trainer
+            )
+            # output isn't for each target, unlike other methods
+            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+            attr = attr.repeat(targets, 1, 1)
+            
+            attr = tuple([attr] + [
+                torch.zeros(
+                    (inputs[i].shape[0]*targets, inputs[i].shape[1], inputs[i].shape[2]), 
+                    device=inputs[i].device) for i in range(1, len(inputs))]
+            )
+        else: 
+            # batch_size x seq_len x features
+            attr = explainer.attribute(
+                inputs=inputs,
+                baselines=baselines,
+                additional_forward_args=additional_forward_args,
+                # mask_net=mask, 
+                batch_size=args.batch_size,
+                trainer=trainer
+            )
+            # output isn't for each target, unlike other methods
+            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+            attr = attr.repeat(targets, 1, 1)
     else:
         raise NotImplementedError(f'Explainer {name} is not implemented')
       

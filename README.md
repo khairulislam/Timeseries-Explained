@@ -23,16 +23,17 @@ TSlib is an open-source library for deep learning researchers, especially deep t
 The following local intepretation methods are supported at present:
 <details>
 
-1. *Feature Ablation* [[2017]](https://arxiv.org/abs/1705.08498)
-2. *Dyna Mask* [[ICML 2021]](https://arxiv.org/abs/2106.05303)
-3. *Extremal Mask* [[ICML 2023]](https://proceedings.mlr.press/v202/enguehard23a/enguehard23a.pdf)
-4. *Feature Permutation* [[Molnar 2020]](https://christophm.github.io/interpretable-ml-book/)
-5. *Augmented Feature Occlusion* [[NeurIPS 2020]](https://proceedings.neurips.cc/paper/2020/file/08fa43588c2571ade19bc0fa5936e028-Paper.pdf)
-6. *Gradient Shap* [[NeurIPS 2017]](https://proceedings.neurips.cc/paper/2017/file/8a20a8621978632d76c43dfd28b67767-Paper.pdf)
-7. *Integreated Gradients* [[ICML 2017]](https://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)
-8. *WinIT* [[ICLR 2023]](https://openreview.net/forum?id=C0q9oBc3n4)
-9. *TSR* [[NeurIPS]](https://proceedings.neurips.cc/paper_files/paper/2020/file/47a3893cc405396a5c30d91320572d6d-Paper.pdf)
-10. *WinTSR* - proposed new method
+1. *WinTSR* - proposed new method
+2. *Feature Ablation* [[2017]](https://arxiv.org/abs/1705.08498)
+3. *Dyna Mask* [[ICML 2021]](https://arxiv.org/abs/2106.05303)
+4. *Extremal Mask* [[ICML 2023]](https://proceedings.mlr.press/v202/enguehard23a/enguehard23a.pdf)
+5. *Feature Permutation* [[Molnar 2020]](https://christophm.github.io/interpretable-ml-book/)
+6. *Augmented Feature Occlusion* [[NeurIPS 2020]](https://proceedings.neurips.cc/paper/2020/file/08fa43588c2571ade19bc0fa5936e028-Paper.pdf)
+7. *Gradient Shap* [[NeurIPS 2017]](https://proceedings.neurips.cc/paper/2017/file/8a20a8621978632d76c43dfd28b67767-Paper.pdf)
+8. *Integreated Gradients* [[ICML 2017]](https://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)
+9. *WinIT* [[ICLR 2023]](https://openreview.net/forum?id=C0q9oBc3n4)
+10. *TSR* [[NeurIPS 2020]](https://proceedings.neurips.cc/paper_files/paper/2020/file/47a3893cc405396a5c30d91320572d6d-Paper.pdf)
+11. ContraLSP [[ICLR 2024]](https://arxiv.org/pdf/2401.08552)
 
 </details>
 

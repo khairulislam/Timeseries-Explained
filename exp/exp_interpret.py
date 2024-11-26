@@ -6,6 +6,7 @@ from utils.explainer import *
 from attrs.tsr import TSR
 from attrs.winTSR import WinTSR
 from attrs.winIT import WinIT
+from attrs.gate_mask import GateMask
 from tint.metrics import mae, mse, accuracy, cross_entropy, lipschitz_max, log_odds
 from utils.auc import auc
 from datetime import datetime
@@ -46,7 +47,8 @@ explainer_name_map = {
     "feature_ablation":FeatureAblation,
     "feature_permutation":FeaturePermutation,
     "winIT": WinIT,
-    "tsr": TSR, "wtsr": WinTSR
+    "tsr": TSR, "wtsr": WinTSR,
+    "gatemask": GateMask
     # "ozyegen":FeatureAblation
 }
 
