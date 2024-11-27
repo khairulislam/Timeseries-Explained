@@ -17,7 +17,7 @@ module load cuda-toolkit cudnn-8.9.5_cuda12.x anaconda3
 conda deactivate
 conda activate ml
 
-explainers=("feature_ablation" "occlusion" "augmented_occlusion" "feature_permutation" "integrated_gradients" "gradient_shap" "dyna_mask" "winIT" "wtsr" "tsr")
+explainers=("feature_ablation" "occlusion" "augmented_occlusion" "feature_permutation" "integrated_gradients" "gradient_shap" "dyna_mask" "winIT" "wtsr" "gatemask" "tsr")
 models=("DLinear" "MICN" "SegRNN" "iTransformer")
 
 for model in ${models[@]}
