@@ -96,11 +96,7 @@ class GateMask(PerturbationAttribution):
         # Init MaskNet if not provided
         if mask_net is None:
             mask_net = GateMaskNet(
-                forward_func=self.forward_func,
-                lambda_1=0.1,  # 0.1 for our lambda is suitable
-                lambda_2=0.1,
-                optim="adam",
-                lr=0.1
+                forward_func=self.forward_func
             )
 
         # Init model

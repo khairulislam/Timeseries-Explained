@@ -5,6 +5,7 @@ from pytorch_lightning import Trainer
 from exp.exp_basic import dual_input_users
 from attrs.gatemasknn import GateMaskNet
 from tint.models import MLP, RNN
+from pytorch_lightning.callbacks import EarlyStopping
 
 def get_total_data(dataloader, device, add_x_mark=True):        
     if add_x_mark:
@@ -223,21 +224,41 @@ def compute_attr(
     elif name == 'gatemask':
         trainer = Trainer(
             logger=False, enable_checkpointing=False,
-            enable_progress_bar=False, max_epochs=5,
-            enable_model_summary=False,accelerator="auto"
+            enable_progress_bar=False, max_epochs=50,
+            enable_model_summary=False,accelerator="auto",
+            callbacks=[EarlyStopping('train_loss', patience=10, mode='min', verbose=False)],
         )
+        
+        mask = GateMaskNet(
+            forward_func=explainer.forward_func,
+            model=torch.nn.Sequential(
+                RNN(
+                    input_size=args.n_features,
+                    rnn="gru",
+                    hidden_size=args.n_features,
+                    bidirectional=True,
+                ),
+                MLP([2 * args.n_features, args.n_features]),
+            ),
+            lambda_1=1,  # 0.1 for our lambda is suitable
+            lambda_2=1,
+            optim="adam",
+            lr=0.01,
+        )
+        
         
         if type(inputs) == tuple:
             new_additional_forward_args = tuple([
                 input for input in inputs[1:]
             ]) + additional_forward_args
+            mask.to(inputs[0].device)
             
             # output is a tuple of length 1, since only one input is used
             attr = explainer.attribute(
                 inputs=inputs[0],
                 baselines=baselines[0],
                 additional_forward_args=new_additional_forward_args,
-                # mask_net=mask, 
+                mask_net=mask, 
                 batch_size=args.batch_size,
                 trainer=trainer
             )
@@ -251,12 +272,13 @@ def compute_attr(
                     device=inputs[i].device) for i in range(1, len(inputs))]
             )
         else: 
+            mask.to(inputs.device)
             # batch_size x seq_len x features
             attr = explainer.attribute(
                 inputs=inputs,
                 baselines=baselines,
                 additional_forward_args=additional_forward_args,
-                # mask_net=mask, 
+                mask_net=mask, 
                 batch_size=args.batch_size,
                 trainer=trainer
             )

@@ -337,7 +337,7 @@ class GateMaskNet(Net):
 
     def _triplet_loss(self, condition):
         _, ts_dim, num_dim = condition.shape
-        points = condition.reshape(-1, ts_dim * num_dim).detach().numpy()
+        points = condition.reshape(-1, ts_dim * num_dim).detach().cpu().numpy()
         num_cluster = 2
         kmeans = KMeans(n_clusters=num_cluster)
         kmeans.fit(points)
