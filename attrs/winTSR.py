@@ -74,13 +74,11 @@ class WinTSR(Occlusion):
         # Compute sliding window for the Time-Relevance Score
         # Only the time dimension (dim 1) has a sliding window of 1
         # shape (batch_size * n_output) x seq_len  
-        time_relevance_score = self.get_time_relevance_score2(
+        time_relevance_score = self.get_time_relevance_score(
             inputs=inputs,
             baselines=baselines,
             target=target,
-            additional_forward_args=additional_forward_args,
-            # perturbations_per_eval=perturbations_per_eval,
-            show_progress=show_progress
+            additional_forward_args=additional_forward_args
         )  
         
         # Normalize if required along the time axis
@@ -161,9 +159,6 @@ class WinTSR(Occlusion):
             # kwargs_run_forward=kwargs,
         )
         
-        
-        # print('frs shape ', [tsr.shape for tsr in features_relevance_score])
-
         # print('frs shape ', [tsr.shape for tsr in features_relevance_score])
         # Reshape attributions before merge
         time_relevance_score = tuple(
@@ -194,8 +189,7 @@ class WinTSR(Occlusion):
             baselines: BaselineType = None,
             target: TargetType = None,
             additional_forward_args: Any = None,
-            perturbations_per_eval=1,
-            show_progress=False
+            perturbations_per_eval=1
         ):
         tsr_sliding_window_shapes = tuple(
             (1,) + input.shape[2:] for input in inputs
@@ -210,7 +204,7 @@ class WinTSR(Occlusion):
             additional_forward_args=additional_forward_args,
             perturbations_per_eval=perturbations_per_eval,
             attributions_fn=abs,
-            show_progress=show_progress,
+            show_progress=False,
             #TODO: uncomment after new release
             # kwargs_run_forward=kwargs,
         )
@@ -226,8 +220,7 @@ class WinTSR(Occlusion):
             self, inputs: TensorOrTupleOfTensorsGeneric,
             baselines: BaselineType = None,
             target: TargetType = None,
-            additional_forward_args: Any = None,
-            show_progress=False
+            additional_forward_args: Any = None
         ):
         
         with torch.no_grad():
@@ -239,7 +232,6 @@ class WinTSR(Occlusion):
         time_relevance_score = []
         for input_index in range(len(inputs)):
             batch_size, seq_len, n_features = inputs[input_index].shape
-            cloned = inputs[input_index].clone()
             score = torch.zeros(
                 (batch_size * y_original.shape[1], seq_len), 
                 device=inputs[input_index].device

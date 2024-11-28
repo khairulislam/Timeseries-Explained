@@ -52,6 +52,170 @@ def get_baseline(inputs, mode='random'):
     
     return baselines
 
+def compute_attr_with_trainer(
+    inputs, explainer,
+    additional_forward_args, targets
+): # the parameters ensure Trainer doesn't flood the output with logs and create log folders
+    trainer = Trainer(
+        logger=False, enable_checkpointing=False,
+        enable_progress_bar=False, max_epochs=5,accelerator="gpu",
+        enable_model_summary=False
+    )
+    if type(inputs) == tuple:
+        new_additional_forward_args = tuple([
+            input for input in inputs[1:]
+        ]) + additional_forward_args
+        
+        # output is a tuple of length 1, since only one input is used
+        attr = explainer.attribute(
+            inputs=inputs[0],
+            additional_forward_args=new_additional_forward_args,
+            trainer=trainer
+        )
+        # output isn't for each target, unlike other methods
+        # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+        attr = attr.repeat(targets, 1, 1)
+        
+        attr = tuple([attr] + [
+            torch.zeros(
+                (inputs[i].shape[0]*targets, inputs[i].shape[1], inputs[i].shape[2]), 
+                device=inputs[i].device) for i in range(1, len(inputs))]
+        )
+    else: 
+        # batch_size x seq_len x features
+        attr = explainer.attribute(
+            inputs=inputs,
+            additional_forward_args=additional_forward_args,
+            trainer=trainer
+        )
+        # output isn't for each target, unlike other methods
+        # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+        attr = attr.repeat(targets, 1, 1)
+        
+    return attr
+
+def compute_attr_with_gatemask(
+    inputs, baselines, explainer,
+    additional_forward_args, args, targets
+): 
+    trainer = Trainer(
+        logger=False, enable_checkpointing=False,
+        enable_progress_bar=False, max_epochs=50,
+        enable_model_summary=False,accelerator="auto",
+        callbacks=[EarlyStopping('train_loss', patience=10, mode='min', verbose=False)],
+    )
+    
+    mask = GateMaskNet(
+        forward_func=explainer.forward_func,
+        model=torch.nn.Sequential(
+            RNN(
+                input_size=args.n_features,
+                rnn="gru",
+                hidden_size=args.n_features,
+                bidirectional=True,
+            ),
+            MLP([2 * args.n_features, args.n_features]),
+        ),
+        lambda_1=1,  # 0.1 for our lambda is suitable
+        lambda_2=1,
+        optim="adam",
+        lr=0.01,
+    )
+    
+    
+    if type(inputs) == tuple:
+        new_additional_forward_args = tuple([
+            input for input in inputs[1:]
+        ]) + additional_forward_args
+        mask.to(inputs[0].device)
+        
+        # output is a tuple of length 1, since only one input is used
+        attr = explainer.attribute(
+            inputs=inputs[0],
+            baselines=baselines[0],
+            additional_forward_args=new_additional_forward_args,
+            mask_net=mask, 
+            batch_size=args.batch_size,
+            trainer=trainer
+        )
+        # output isn't for each target, unlike other methods
+        # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+        attr = attr.repeat(targets, 1, 1)
+        
+        attr = tuple([attr] + [
+            torch.zeros(
+                (inputs[i].shape[0]*targets, inputs[i].shape[1], inputs[i].shape[2]), 
+                device=inputs[i].device) for i in range(1, len(inputs))]
+        )
+    else: 
+        mask.to(inputs.device)
+        # batch_size x seq_len x features
+        attr = explainer.attribute(
+            inputs=inputs,
+            baselines=baselines,
+            additional_forward_args=additional_forward_args,
+            mask_net=mask, 
+            batch_size=args.batch_size,
+            trainer=trainer
+        )
+        # output isn't for each target, unlike other methods
+        # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
+        attr = attr.repeat(targets, 1, 1)
+        
+    return attr
+
+def compute_attr_with_gradient(
+    name, inputs, baselines, explainer,
+    additional_forward_args, args, targets
+): 
+    attr_list = []
+        
+    for target in range(targets):
+        if name in ['deep_lift', 'integrated_gradients', 'gradient_shap']:
+            
+            # these models use the multiple inputs in the forward function
+            if type(inputs) == tuple and args.model not in dual_input_users:
+                new_additional_forward_args = tuple([
+                    input for input in inputs[1:]
+                ]) + additional_forward_args
+                
+                # output is a tuple of length 1, since only one input is used
+                attr = explainer.attribute(
+                    inputs=inputs[0], baselines=baselines[0], target=target,
+                    additional_forward_args=new_additional_forward_args
+                )
+                
+                attr = tuple([attr] + [
+                    torch.zeros_like(inputs[i], device=inputs[i].device) for i in range(1, len(inputs))]
+                )
+                
+            else: attr = explainer.attribute(
+                inputs=inputs, baselines=baselines, target=target,
+                additional_forward_args=additional_forward_args
+            )
+        else: attr = explainer.attribute(
+            inputs=inputs, baselines=baselines, target=target,
+            additional_forward_args=additional_forward_args
+        )
+        
+        attr_list.append(attr)
+    
+    if type(inputs) == tuple:
+        attr = []
+        for input_index in range(len(inputs)):
+            attr_per_input = torch.stack([score[input_index] for score in attr_list])
+            # pred_len x batch x seq_len x features -> batch x pred_len x seq_len x features
+            attr_per_input = attr_per_input.permute(1, 0, 2, 3)
+            attr.append(attr_per_input)
+            
+        attr = tuple(attr)
+    else:
+        attr = torch.stack(attr_list)
+        # pred_len x batch x seq_len x features -> batch x pred_len x seq_len x features
+        attr = attr.permute(1, 0, 2, 3)
+        
+    return attr
+
 def compute_attr(
     name, inputs, baselines, explainer,
     additional_forward_args, args
@@ -82,52 +246,11 @@ def compute_attr(
         'deep_lift', 'lime', 'integrated_gradients', 
         'gradient_shap'
     ]:
-        attr_list = []
-        
-        for target in range(targets):
-            if name in ['deep_lift', 'integrated_gradients', 'gradient_shap']:
-                
-                # these models use the multiple inputs in the forward function
-                if type(inputs) == tuple and args.model not in dual_input_users:
-                    new_additional_forward_args = tuple([
-                        input for input in inputs[1:]
-                    ]) + additional_forward_args
-                    
-                    # output is a tuple of length 1, since only one input is used
-                    attr = explainer.attribute(
-                        inputs=inputs[0], baselines=baselines[0], target=target,
-                        additional_forward_args=new_additional_forward_args
-                    )
-                    
-                    attr = tuple([attr] + [
-                        torch.zeros_like(inputs[i], device=inputs[i].device) for i in range(1, len(inputs))]
-                    )
-                    
-                else: attr = explainer.attribute(
-                    inputs=inputs, baselines=baselines, target=target,
-                    additional_forward_args=additional_forward_args
-                )
-            else: attr = explainer.attribute(
-                inputs=inputs, baselines=baselines, target=target,
-                additional_forward_args=additional_forward_args
-            )
-            
-            attr_list.append(attr)
-        
-        if type(inputs) == tuple:
-            attr = []
-            for input_index in range(len(inputs)):
-                attr_per_input = torch.stack([score[input_index] for score in attr_list])
-                # pred_len x batch x seq_len x features -> batch x pred_len x seq_len x features
-                attr_per_input = attr_per_input.permute(1, 0, 2, 3)
-                attr.append(attr_per_input)
-                
-            attr = tuple(attr)
-        else:
-            attr = torch.stack(attr_list)
-            # pred_len x batch x seq_len x features -> batch x pred_len x seq_len x features
-            attr = attr.permute(1, 0, 2, 3)
-        
+        attr = compute_attr_with_gradient(
+            name, inputs, baselines, explainer,
+            additional_forward_args, args, targets
+        )
+
     elif name in ['feature_ablation']:
         attr = explainer.attribute(
             inputs=inputs,
@@ -149,42 +272,10 @@ def compute_attr(
             threshold=0.55 
         )
     elif name in ['dyna_mask', 'extremal_mask']:
-        # the parameters ensure Trainer doesn't flood the output with logs and create log folders
-        trainer = Trainer(
-            logger=False, enable_checkpointing=False,
-            enable_progress_bar=False, max_epochs=5,accelerator="gpu",
-            enable_model_summary=False
+        attr = compute_attr_with_trainer(
+            inputs, explainer,
+            additional_forward_args, targets
         )
-        if type(inputs) == tuple:
-            new_additional_forward_args = tuple([
-                input for input in inputs[1:]
-            ]) + additional_forward_args
-            
-            # output is a tuple of length 1, since only one input is used
-            attr = explainer.attribute(
-                inputs=inputs[0],
-                additional_forward_args=new_additional_forward_args,
-                trainer=trainer
-            )
-            # output isn't for each target, unlike other methods
-            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
-            attr = attr.repeat(targets, 1, 1)
-            
-            attr = tuple([attr] + [
-                torch.zeros(
-                    (inputs[i].shape[0]*targets, inputs[i].shape[1], inputs[i].shape[2]), 
-                    device=inputs[i].device) for i in range(1, len(inputs))]
-            )
-        else: 
-            # batch_size x seq_len x features
-            attr = explainer.attribute(
-                inputs=inputs,
-                additional_forward_args=additional_forward_args,
-                trainer=trainer
-            )
-            # output isn't for each target, unlike other methods
-            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
-            attr = attr.repeat(targets, 1, 1)
         
     elif name == 'fit':
         if type(inputs) == tuple:
@@ -222,69 +313,10 @@ def compute_attr(
             attributions_fn=abs
         )
     elif name == 'gatemask':
-        trainer = Trainer(
-            logger=False, enable_checkpointing=False,
-            enable_progress_bar=False, max_epochs=50,
-            enable_model_summary=False,accelerator="auto",
-            callbacks=[EarlyStopping('train_loss', patience=10, mode='min', verbose=False)],
+        attr = compute_attr_with_gatemask(
+            inputs, baselines, explainer,
+            additional_forward_args, args, targets
         )
-        
-        mask = GateMaskNet(
-            forward_func=explainer.forward_func,
-            model=torch.nn.Sequential(
-                RNN(
-                    input_size=args.n_features,
-                    rnn="gru",
-                    hidden_size=args.n_features,
-                    bidirectional=True,
-                ),
-                MLP([2 * args.n_features, args.n_features]),
-            ),
-            lambda_1=1,  # 0.1 for our lambda is suitable
-            lambda_2=1,
-            optim="adam",
-            lr=0.01,
-        )
-        
-        
-        if type(inputs) == tuple:
-            new_additional_forward_args = tuple([
-                input for input in inputs[1:]
-            ]) + additional_forward_args
-            mask.to(inputs[0].device)
-            
-            # output is a tuple of length 1, since only one input is used
-            attr = explainer.attribute(
-                inputs=inputs[0],
-                baselines=baselines[0],
-                additional_forward_args=new_additional_forward_args,
-                mask_net=mask, 
-                batch_size=args.batch_size,
-                trainer=trainer
-            )
-            # output isn't for each target, unlike other methods
-            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
-            attr = attr.repeat(targets, 1, 1)
-            
-            attr = tuple([attr] + [
-                torch.zeros(
-                    (inputs[i].shape[0]*targets, inputs[i].shape[1], inputs[i].shape[2]), 
-                    device=inputs[i].device) for i in range(1, len(inputs))]
-            )
-        else: 
-            mask.to(inputs.device)
-            # batch_size x seq_len x features
-            attr = explainer.attribute(
-                inputs=inputs,
-                baselines=baselines,
-                additional_forward_args=additional_forward_args,
-                mask_net=mask, 
-                batch_size=args.batch_size,
-                trainer=trainer
-            )
-            # output isn't for each target, unlike other methods
-            # batch_size x seq_len x features -> (targets x batch_size) x seq_len x features
-            attr = attr.repeat(targets, 1, 1)
     else:
         raise NotImplementedError(f'Explainer {name} is not implemented')
       

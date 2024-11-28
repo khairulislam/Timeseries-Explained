@@ -6,9 +6,9 @@ def reduce_df(df:pd.DataFrame):
     return df.groupby('metric').aggregate('mean')[['comp', 'suff']].reset_index()
 
 int_metric_map = {
-    'electricity': ['mae'], #, 'mse'],
-    'traffic': ['mae'], #, 'mse'],
-    'mimic_iii': ['auc'] #, 'cross_entropy']
+    'electricity': ['mae'],
+    'traffic': ['mae'],
+    'mimic_iii': ['auc']
 }
 
 test_metric_map = {
@@ -23,7 +23,7 @@ attr_methods = [
     'feature_ablation', 'augmented_occlusion', 
     'feature_permutation',
     'integrated_gradients', 'gradient_shap', 'dyna_mask',
-    'winIT', 'tsr' ,'wtsr'
+    'winIT', 'tsr', 'gatemask', 'wtsr'
 ]
 
 short_form = {
@@ -36,7 +36,8 @@ short_form = {
     'wtsr': 'WinTSR',
     'gradient_shap': 'GS',
     'integrated_gradients': 'IG',
-    'dyna_mask': 'DM'
+    'dyna_mask': 'DM',
+    'gatemask': 'ContraLSP'
 }
 NUM_ITERATIONS = 3
 
@@ -49,10 +50,10 @@ NUM_ITERATIONS = 3
 #     for itr_no in range(1,NUM_ITERATIONS+1):
 #         for attr_method in attr_methods:
 #             for model in models: # , 'Crossformer'
-#                 df = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
+#                 df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
 #                 df = reduce_df(df)
                 
-#                 df_wtsr = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/wtsr.csv')
+#                 df_wtsr = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/wtsr.csv')
 #                 df_wtsr = reduce_df(df_wtsr)
                 
 #                 for metric in metric_map[dataset]:
@@ -89,7 +90,7 @@ for dataset in datasets:
             
             scores = 0
             for itr_no in range(1, NUM_ITERATIONS+1):
-                df = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/test_metrics.csv')
+                df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/test_metrics.csv')
                 score = df[df['metric']==metric]['score'].values[0]
                 scores += score
                 
@@ -103,7 +104,7 @@ for dataset in datasets:
         for metric in int_metric_map[dataset]:
             for model in models:
                 for itr_no in range(1, NUM_ITERATIONS+1):
-                    df = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/{attr_method}.csv')
+                    df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv')
                     df = reduce_df(df)
                     comp, suff= df[df['metric']==metric][['comp', 'suff']].values[0]
                     
@@ -112,9 +113,16 @@ for dataset in datasets:
                     ])
 
 result_df = pd.DataFrame(results, columns=['dataset', 'attr_method', 'metric', 'model', 'itr_no', 'comp', 'suff'])
+result_df.round(3).to_csv('results/results.csv', index=False)
 print(result_df.head(3))
 result_df = result_df.groupby(['dataset', 'attr_method', 'metric', 'model'])[['comp', 'suff']].mean().reset_index()
-result_df = result_df[result_df['metric'].isin(['mae', 'auc'])]
+
+int_metrics = []
+for dataset in int_metric_map:
+    int_metrics.extend(int_metric_map[dataset])
+int_metrics = list(set(int_metrics))
+
+result_df = result_df[result_df['metric'].isin(int_metrics)]
 
 selected = result_df['metric'].isin(['auc', 'accuracy'])
 result_df.loc[selected, ['comp', 'suff']] = 1 - result_df[selected][['comp', 'suff']]
@@ -144,7 +152,7 @@ for dataset in datasets:
                     scores = []
                     dfs = []
                     for itr_no in range(1, NUM_ITERATIONS+1):
-                        df = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
+                        df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
                     
                         df = df[df['metric']==metric][['area', metric_type]]
                         dfs.append(df)
@@ -154,7 +162,7 @@ for dataset in datasets:
                     if metric in ['auc', 'accuracy']:
                         df[metric_type] = 1-df[metric_type]
                     
-                    score = df[metric_type].mean()
+                    score = df[metric_type].mean() 
                     print_row(score)
             
             mean_rank, rank = ranks[
@@ -165,35 +173,38 @@ for dataset in datasets:
             print('\\\\')
         print('\\hline\n')
 
-# print('\n\nResult after normalizing by baseline')
-# results = {}
-# for dataset in datasets:
-#     # use the first or second on
-#     for metric in int_metric_map[dataset]:
-#         print(f'Dataset {dataset}, metric {metric}.\n')
-#         print(f" & {' & '.join(models)} & {' & '.join(models)} \\\\ \\hline")
+for dataset in datasets:
+    # use the first or second on
+    for metric in int_metric_map[dataset]:
+        print(f'Dataset {dataset}, metric {metric}.\n')
+        print(f" & {' & '.join(models)} \\\\ \\hline")
         
-#         for attr_method in attr_methods:
-#             print(f'{short_form[attr_method]} ', end='')
-#             for metric_type in ['comp', 'suff']:
-#                 for model in models:
-#                     scores = []
-#                     dfs = []
-#                     for itr_no in range(1, NUM_ITERATIONS+1):
-#                         df = pd.read_csv(f'../results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
+        for attr_method in attr_methods:
+            print(f'{short_form[attr_method]} ', end='')
+            for model in models:
+                scores = []
+                for metric_type in ['comp', 'suff']:
+                    dfs = []
+                    for itr_no in range(1, NUM_ITERATIONS+1):
+                        df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
                     
-#                         df = df[df['metric']==metric][['area', metric_type]]
-#                         dfs.append(df)
-
-#                     df = pd.concat(dfs, axis=0)
-#                     df.replace([np.inf, -np.inf], np.nan, inplace=True)
+                        df = df[df['metric']==metric][['area', metric_type]]
+                        dfs.append(df)
+                
+                    df = pd.concat(dfs, axis=0)
+                    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+                    if metric in ['auc', 'accuracy']:
+                        df[metric_type] = 1-df[metric_type]
                     
-#                     score = df[metric_type].mean()
-#                     if metric in ['auc', 'accuracy']:
-#                         score = 1-score
-                    
-#                     results[(dataset, metric, attr_method,metric_type, model)] = score
-#                     baseline = results[(dataset, metric, 'feature_ablation', metric_type, model)]
-#                     print_row(score/baseline)
-#             print('\\\\')
-#         print('\\hline\n')
+                    score = df[metric_type].mean() 
+                    scores.append(score)
+            
+                # take geometric mean of the two scores
+                comp, suff = scores[0], scores[1]
+                score = comp * (1-suff) / (comp + (1-suff))
+                
+                if dataset == 'mimic_iii': print_row(score, decimals=3)
+                else: print_row(score, decimals=1)
+            
+            print('\\\\')
+        print('\\hline\n')

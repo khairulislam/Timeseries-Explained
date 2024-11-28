@@ -28,7 +28,8 @@ python interpret.py \
   --seq_len 48 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1 --disable_progress
+  --n_features 1 --disable_progress\
+  --batch_size 128
 
 python interpret.py \
   --task_name long_term_forecast \
@@ -40,7 +41,7 @@ python interpret.py \
   --seq_len 24 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1 --disable_progress
+  --n_features 1 --disable_progress --batch_size 128
 
 python interpret.py \
   --task_name long_term_forecast \
@@ -52,7 +53,7 @@ python interpret.py \
   --seq_len 48 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1 --disable_progress
+  --n_features 1 --disable_progress --batch_size 128
 
 python interpret.py \
   --task_name long_term_forecast \
@@ -64,7 +65,7 @@ python interpret.py \
   --seq_len 24 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1 --disable_progress
+  --n_features 1 --disable_progress --batch_size 128
 
 python interpret.py \
   --explainers winIT wtsr tsr \
@@ -73,7 +74,8 @@ python interpret.py \
   --root_path ./dataset/mimic_iii/ \
   --data_path mimic_iii.pkl \
   --metrics auc accuracy cross_entropy \
-  --model iTransformer --n_features 31 --disable_progress --seq_len 36
+  --model iTransformer --n_features 31\
+  --disable_progress --seq_len 36 --batch_size 128
 
 python interpret.py \
   --explainers winIT wtsr tsr \
@@ -82,4 +84,5 @@ python interpret.py \
   --root_path ./dataset/mimic_iii/ \
   --data_path mimic_iii.pkl \
   --metrics auc accuracy cross_entropy \
-  --model iTransformer --n_features 31 --disable_progress --seq_len 24
+  --model iTransformer --n_features 31\
+  --disable_progress --seq_len 24 --batch_size 128
