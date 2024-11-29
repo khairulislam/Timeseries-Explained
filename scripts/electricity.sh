@@ -58,8 +58,7 @@ python interpret.py \
   --seq_len 96 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1 \
-  --batch_size 128
+  --n_features 1
 
 python interpret.py \
   --task_name long_term_forecast \
@@ -73,5 +72,5 @@ python interpret.py \
   --pred_len 24 \
   --n_features 1 \
   --result_path scratch --overwrite\
-  --itr_no 1 --batch_size 128
+  --itr_no 1
   

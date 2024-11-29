@@ -6,6 +6,9 @@ from exp.exp_basic import dual_input_users
 from attrs.gatemasknn import GateMaskNet
 from tint.models import MLP, RNN
 from pytorch_lightning.callbacks import EarlyStopping
+from tint.attr.models import JointFeatureGeneratorNet
+from pytorch_lightning import Trainer
+from torch.utils.data import DataLoader, TensorDataset
 
 def get_total_data(dataloader, device, add_x_mark=True):        
     if add_x_mark:
@@ -25,8 +28,8 @@ def get_baseline(inputs, mode='random'):
     
     if mode =='zero': baselines = torch.zeros_like(inputs, device=device).float()
     elif mode == 'random': 
-        # baselines = torch.randn_like(inputs, device=device).float()
-        baselines = torch.normal(0, 1.2, size=inputs.shape, device=device).float()
+        baselines = torch.randn_like(inputs, device=device).float()
+        # baselines = torch.normal(0, 1.2, size=inputs.shape, device=device).float()
     elif mode == 'aug':
         inputs = inputs.reshape((-1, n_features))
         baselines = torch.zeros_like(inputs, device=device).float()
@@ -52,9 +55,6 @@ def get_baseline(inputs, mode='random'):
         ).repeat(batch_size, 1, 1).float()
         
     elif mode == 'gen':
-        from tint.attr.models import JointFeatureGeneratorNet
-        from pytorch_lightning import Trainer
-        from torch.utils.data import DataLoader, TensorDataset
         trainer = Trainer(
             logger=False, enable_checkpointing=False,
             enable_progress_bar=False, max_epochs=100,
@@ -94,7 +94,7 @@ def compute_attr_with_trainer(
 ): # the parameters ensure Trainer doesn't flood the output with logs and create log folders
     trainer = Trainer(
         logger=False, enable_checkpointing=False,
-        enable_progress_bar=False, max_epochs=5,accelerator="gpu",
+        enable_progress_bar=False, max_epochs=100,accelerator="gpu",
         enable_model_summary=False
     )
     if type(inputs) == tuple:

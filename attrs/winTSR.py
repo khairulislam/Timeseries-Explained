@@ -78,7 +78,9 @@ class WinTSR(Occlusion):
             inputs=inputs,
             baselines=baselines,
             target=target,
-            additional_forward_args=additional_forward_args
+            additional_forward_args=additional_forward_args,
+            perturbations_per_eval=perturbations_per_eval,
+            show_progress=show_progress
         )  
         
         # Normalize if required along the time axis
@@ -189,7 +191,8 @@ class WinTSR(Occlusion):
             baselines: BaselineType = None,
             target: TargetType = None,
             additional_forward_args: Any = None,
-            perturbations_per_eval=1
+            perturbations_per_eval=1,
+            show_progress=False
         ):
         tsr_sliding_window_shapes = tuple(
             (1,) + input.shape[2:] for input in inputs
@@ -204,7 +207,7 @@ class WinTSR(Occlusion):
             additional_forward_args=additional_forward_args,
             perturbations_per_eval=perturbations_per_eval,
             attributions_fn=abs,
-            show_progress=False,
+            show_progress=show_progress,
             #TODO: uncomment after new release
             # kwargs_run_forward=kwargs,
         )
@@ -215,51 +218,6 @@ class WinTSR(Occlusion):
             for tsr in time_relevance_score
         )
         return time_relevance_score
-    
-    def get_time_relevance_score2(
-            self, inputs: TensorOrTupleOfTensorsGeneric,
-            baselines: BaselineType = None,
-            target: TargetType = None,
-            additional_forward_args: Any = None
-        ):
-        
-        with torch.no_grad():
-            y_original = self.forward_func(*inputs, *additional_forward_args)
-        
-        if target is not None:
-            y_original = y_original[:, target]
-        
-        time_relevance_score = []
-        for input_index in range(len(inputs)):
-            batch_size, seq_len, n_features = inputs[input_index].shape
-            score = torch.zeros(
-                (batch_size * y_original.shape[1], seq_len), 
-                device=inputs[input_index].device
-            )
-            
-            for t in range(seq_len):
-                cloned = inputs[input_index].clone()
-                cloned[:, t] = baselines[input_index][:, t]
-                        
-                inputs_hat = []
-                for i in range(len(inputs)):
-                    if i == input_index: inputs_hat.append(cloned)
-                    else: inputs_hat.append(inputs[i])
-                
-                with torch.no_grad():
-                    y_perturbed = self.forward_func(
-                        *tuple(inputs_hat), *additional_forward_args
-                    )
-                
-                if target is not None:
-                    y_perturbed = y_perturbed[:, target]
-                        
-                score[:, t] = torch.abs(y_perturbed - y_original).reshape(-1)
-                # cloned[:, t] = prev_value
-                
-            time_relevance_score.append(score)
-
-        return tuple(time_relevance_score)
 
     def _construct_ablated_input(
         self,

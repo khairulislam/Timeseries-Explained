@@ -35,6 +35,6 @@ python interpret.py \
   --label_len 12 \
   --pred_len 24 \
   --n_features 1 --disable_progress\
-  --overwrite --batch_size 128
+  --overwrite
 
 done

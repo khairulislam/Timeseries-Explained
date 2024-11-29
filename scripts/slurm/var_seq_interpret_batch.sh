@@ -52,7 +52,7 @@ function interpret {
       --label_len 12 \
       --pred_len 24 \
       --n_features 1 --disable_progress\
-      --overwrite --batch_size 128
+      --overwrite
     
   elif [ $dataset = 1 ]
   then
@@ -68,7 +68,7 @@ function interpret {
       --label_len 12 \
       --pred_len 24 \
       --n_features 1 --disable_progress\
-      --overwrite --batch_size 128
+      --overwrite
   else
     echo "Running MIMIC with seq_len $seq_len"
     python interpret.py \
@@ -80,7 +80,7 @@ function interpret {
       --metrics auc accuracy cross_entropy \
       --model $model --n_features 31 \
       --seq_len $seq_len --disable_progress\
-      --overwrite --batch_size 128
+      --overwrite
   fi
 }
 
