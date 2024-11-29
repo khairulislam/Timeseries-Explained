@@ -24,7 +24,9 @@ def get_baseline(inputs, mode='random'):
     device = inputs.device
     
     if mode =='zero': baselines = torch.zeros_like(inputs, device=device).float()
-    elif mode == 'random': baselines = torch.randn_like(inputs, device=device).float()
+    elif mode == 'random': 
+        # baselines = torch.randn_like(inputs, device=device).float()
+        baselines = torch.normal(0, 1.2, size=inputs.shape, device=device).float()
     elif mode == 'aug':
         inputs = inputs.reshape((-1, n_features))
         baselines = torch.zeros_like(inputs, device=device).float()
@@ -37,15 +39,49 @@ def get_baseline(inputs, mode='random'):
             baselines[:, f] = choices[sampled_index]
         baselines = baselines.reshape((batch_size, seq_len, n_features))
     elif mode == 'normal':
-        means = torch.mean(inputs, dim=(0, 1))
-        std = torch.std(inputs, dim=(0, 1))
-        baselines = torch.normal(means, std).repeat(
-            batch_size, inputs.shape[1], 1
-        ).float()
+        means = torch.mean(inputs, dim=(0, 1), keepdim=True).repeat(batch_size, seq_len, 1)
+        std = torch.std(inputs, dim=(0, 1), keepdim=True).repeat(batch_size, seq_len, 1)
+        
+        baselines = torch.normal(means, std).float()
+        # .repeat(
+        #     batch_size, inputs.shape[1], 1
+        # ).float()
     elif mode == 'mean': 
         baselines = torch.mean(
                 inputs, axis=0
         ).repeat(batch_size, 1, 1).float()
+        
+    elif mode == 'gen':
+        from tint.attr.models import JointFeatureGeneratorNet
+        from pytorch_lightning import Trainer
+        from torch.utils.data import DataLoader, TensorDataset
+        trainer = Trainer(
+            logger=False, enable_checkpointing=False,
+            enable_progress_bar=False, max_epochs=100,
+            enable_model_summary=False,accelerator='auto',
+            callbacks=[EarlyStopping('train_loss', patience=5, mode='min', verbose=False)],
+            # precision='64'
+        )
+        generator = JointFeatureGeneratorNet()
+        n_features = inputs.shape[-1]
+        generator.net.init(feature_size=n_features)
+        generator.net.to(device)
+        generator.to(device)
+        
+        dataloader = DataLoader(
+            TensorDataset(inputs),
+            batch_size=batch_size,
+        )
+        # Train generator
+        trainer.fit(
+            generator, train_dataloaders=dataloader
+        )
+        generator.eval()
+        generator.net.to(device)
+        
+        baselines = torch.randn_like(inputs, device=device).float()
+        for t in range(1, inputs.shape[1]):
+            baselines[:, t] = generator.net.forward(inputs[:, :t])
     else:
         print(f'baseline mode options: [zero, random, aug, mean, normal]')
         raise NotImplementedError

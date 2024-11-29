@@ -33,7 +33,7 @@ The following local intepretation methods are supported at present:
 8. *Integreated Gradients* [[ICML 2017]](https://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)
 9. *WinIT* [[ICLR 2023]](https://openreview.net/forum?id=C0q9oBc3n4)
 10. *TSR* [[NeurIPS 2020]](https://proceedings.neurips.cc/paper_files/paper/2020/file/47a3893cc405396a5c30d91320572d6d-Paper.pdf)
-11. ContraLSP [[ICLR 2024]](https://arxiv.org/pdf/2401.08552)
+11. *ContraLSP* [[ICLR 2024]](https://arxiv.org/pdf/2401.08552)
 
 </details>
 

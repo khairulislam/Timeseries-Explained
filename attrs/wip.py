@@ -22,7 +22,7 @@ from tint.attr.occlusion import FeatureAblation, Occlusion
 from captum.attr import IntegratedGradients
 from utils.explainer import compute_attr
 
-class WinTSR(Occlusion):
+class WinTSR2(Occlusion):
     def __init__(
         self,
         attribution_method: Attribution

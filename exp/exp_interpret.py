@@ -76,7 +76,7 @@ class Exp_Interpret:
     @staticmethod
     def initialize_explainer(
         name, model, args, device, dataloader
-    ):
+    ):  
         # RuntimeError: cudnn RNN backward can only be called in training mode
         if name == 'deep_lift' or (('gradient' in name or 'mask' in name) and 'RNN' in args.model):
             # torch.backends.cudnn.enabled=False
@@ -93,11 +93,11 @@ class Exp_Interpret:
             ) 
             explainer = WinTSR(base_explainer)
             
-        elif name in ['augmented_occlusion', 'winIT', 'fit', 'winIT2', 'winIT3']:
+        elif name in ['augmented_occlusion', 'winIT', 'fit']:
             add_x_mark = args.task_name != 'classification'
             all_inputs = get_total_data(dataloader, device, add_x_mark=add_x_mark)
             
-            if name in ['winIT', 'winIT2', 'winIT3']:
+            if name == 'winIT':
                 explainer = explainer_name_map[name](
                     model, all_inputs, args
                 )

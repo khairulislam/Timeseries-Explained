@@ -14,7 +14,7 @@ int_metric_map = {
 test_metric_map = {
     'electricity': ['mae', 'mse'],
     'traffic': ['mae', 'mse'],
-    'mimic_iii': ['auc', 'accuracy']
+    'mimic_iii': ['auc', 'accuracy', 'cross_entropy']
 }
 
 datasets = ['electricity', 'traffic', 'mimic_iii']
@@ -41,46 +41,34 @@ short_form = {
 }
 NUM_ITERATIONS = 3
 
-# for dataset in datasets:
-#     print(dataset)
-#     wtsr_better_comp = 0
-#     wtsr_better_suff = 0
-#     comp_count = suff_count = 0
-    
-#     for itr_no in range(1,NUM_ITERATIONS+1):
-#         for attr_method in attr_methods:
-#             for model in models: # , 'Crossformer'
-#                 df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
-#                 df = reduce_df(df)
-                
-#                 df_wtsr = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/wtsr.csv')
-#                 df_wtsr = reduce_df(df_wtsr)
-                
-#                 for metric in metric_map[dataset]:
-#                     [comp, suff] = df[df['metric']==metric][['comp', 'suff']].values[0]
-#                     # print(comp, suff)
-                    
-#                     [wtsr_comp, wtsr_suff] = df_wtsr[df_wtsr['metric']==metric][['comp', 'suff']].values[0]
-#                     # print(tsr_comp, tsr_suff)
-                    
-#                     if metric in ['accuracy', 'auc']:
-#                         if comp > wtsr_comp: wtsr_better_comp +=1
-#                         if suff < wtsr_suff: wtsr_better_suff += 1
-#                     else:
-#                         if comp < wtsr_comp: wtsr_better_comp +=1
-#                         if suff > wtsr_suff: wtsr_better_suff += 1
-#                     comp_count +=1
-#                     suff_count +=1
-#                     # break
-                        
-#     print(f'WinTSR better for: comp {wtsr_better_comp}, suff {wtsr_better_suff}. Total cases: {suff_count}')
-#     print(f'WinTSR improve comprehensiveness on {100.0* wtsr_better_comp/comp_count:0.4f}\%, \
-#         and sufficiency on {wtsr_better_suff*100.0/suff_count:0.4f}\% cases.\n')
-
 def print_row(item, decimals=2):
     if type(item) == str:
         print(f'& {item} ', end='')    
     else: print(f'& {np.round(item, decimals):03} ', end='')
+    
+def create_result_file(root='./results'):
+    results = []
+    for dataset in datasets:
+        for attr_method in attr_methods:
+            for metric in int_metric_map[dataset]:
+                for model in models:
+                    for itr_no in range(1, NUM_ITERATIONS+1):
+                        df = pd.read_csv(f'{root}/{dataset}_{model}/{itr_no}/{attr_method}.csv')
+                        # df = reduce_df(df)
+                        values = df[df['metric']==metric][['area', 'comp', 'suff']].values
+                        
+                        for value in values:
+                            area, comp, suff = value
+                            results.append([
+                                dataset, attr_method, metric, 
+                                model, itr_no, area, comp, suff
+                            ])
+
+    result_df = pd.DataFrame(
+        results, columns=['dataset', 'attr_method', 'metric', 
+        'model', 'itr_no', 'area', 'comp', 'suff']
+    )
+    return result_df
     
 print(f"Dataset & Metric &" + " & ".join(models) + " \\\\ \\hline")
 for dataset in datasets:
@@ -98,24 +86,13 @@ for dataset in datasets:
         print('\\\\')
         
 # this section finds the ranks for each method 
-results = []
-for dataset in datasets:
-    for attr_method in attr_methods:
-        for metric in int_metric_map[dataset]:
-            for model in models:
-                for itr_no in range(1, NUM_ITERATIONS+1):
-                    df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv')
-                    df = reduce_df(df)
-                    comp, suff= df[df['metric']==metric][['comp', 'suff']].values[0]
-                    
-                    results.append([
-                        dataset, attr_method, metric, model, itr_no, comp, suff
-                    ])
+result_df = create_result_file()
+# result_df.round(3).to_csv('results/results.csv', index=False)
 
-result_df = pd.DataFrame(results, columns=['dataset', 'attr_method', 'metric', 'model', 'itr_no', 'comp', 'suff'])
-result_df.round(3).to_csv('results/results.csv', index=False)
+result_df = result_df.groupby(
+    ['dataset', 'attr_method', 'metric', 'model', 'itr_no']
+)[['comp', 'suff']].mean().reset_index()
 print(result_df.head(3))
-result_df = result_df.groupby(['dataset', 'attr_method', 'metric', 'model'])[['comp', 'suff']].mean().reset_index()
 
 int_metrics = []
 for dataset in int_metric_map:
