@@ -148,6 +148,8 @@ def get_parser():
                         help='hidden layer dimensions of projector (List)')
     parser.add_argument('--p_hidden_layers', type=int, default=2, help='number of hidden layers in projector')
     
+    # LLM specific params
+    
     return parser
 
 if __name__ == '__main__':

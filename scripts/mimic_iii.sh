@@ -42,7 +42,7 @@ python interpret.py \
   --model DLinear --n_features 31 --seq_len 48
 
 python interpret.py \
-  --explainers feature_ablation \
+  --explainers feature_ablation occlusion augmented_occlusion feature_permutation integrated_gradients gradient_shap winIT gatemask wtsr tsr\
   --task_name classification \
   --data mimic \
   --root_path ./dataset/mimic_iii/ \

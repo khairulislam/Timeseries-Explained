@@ -2,7 +2,8 @@ import os
 import torch
 from data.data_factory import data_provider
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
-    Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, LSTM, TCN, SegRNN, iTransformer
+    Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, \
+    FiLM, LSTM, TCN, SegRNN, iTransformer, TimeLLM, CALF, OFA
     
 
 def stringify_setting(args, complete=False):
@@ -54,7 +55,10 @@ class Exp_Basic(object):
         'LSTM': LSTM,
         'TCN': TCN,
         'SegRNN': SegRNN,
-        'iTransformer': iTransformer
+        'iTransformer': iTransformer,
+        'TimeLLM': TimeLLM,
+        'CALF': CALF,
+        'OFA': OFA
     }
     
     def __init__(self, args):
