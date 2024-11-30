@@ -430,3 +430,15 @@ flag val, acc 0.90474, f1 0.22064, auc 0.81748
 classification_iTransformer_mimic_iii_mimic_ftMS_sl24_ll48_pl0_dm128_nh4_el2_dl1_df256_fc3_ebtimeF_dtTrue  
 flag test, acc 0.90953, f1 0.26761, auc 0.81491
 
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag val, acc 0.90170, f1 0.04237, auc 0.77361
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag test, acc 0.90300, f1 0.05106, auc 0.75116
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag val, acc 0.90518, f1 0.13492, auc 0.78892
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag test, acc 0.90257, f1 0.13178, auc 0.76547
+

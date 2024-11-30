@@ -609,3 +609,15 @@ flag:val, mse:0.060637, mae:0.157, rmse: 0.24625.
 long_term_forecast_iTransformer_traffic_custom_ftS_sl48_ll12_pl24_dm128_nh4_el2_dl1_df256_fc3_ebtimeF_dtTrue  
 flag:test, mse:0.16974, mae:0.23796, rmse: 0.41199.
 
+CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4  
+flag:val, mse:0.2591, mae:0.35818, rmse: 0.50902.
+
+CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4  
+flag:test, mse:0.14971, mae:0.28059, rmse: 0.38693.
+
+CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4  
+flag:val, mse:0.25966, mae:0.35594, rmse: 0.50957.
+
+CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4  
+flag:test, mse:0.14736, mae:0.27731, rmse: 0.38388.
+

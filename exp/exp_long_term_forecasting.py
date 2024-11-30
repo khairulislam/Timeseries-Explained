@@ -18,7 +18,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
     def _build_model(self):
         initializer = self.model_dict[self.args.model]
         
-        if self.args.model == 'MICN':
+        if self.args.model in ['CALF', 'OFA', 'MICN']:
             model = initializer.Model(self.args, self.device).float()
         else:
             model = initializer.Model(self.args).float()
@@ -31,19 +31,40 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         data_set, data_loader = data_provider(self.args, flag)
         return data_set, data_loader
 
-    def _select_optimizer(self):
-        model_optim = torch.optim.Adam(
-            self.model.parameters(), lr=self.args.learning_rate
-        )
-        return model_optim
-
     def _select_criterion(self):
-        criterion = torch.nn.MSELoss()
+        if self.args.model == 'CALF':
+            criterion = DistillationLoss(
+                self.args.distill_loss, 
+                self.args.logits_loss, 
+                self.args.task_loss, 
+                self.args.task_name, 
+                self.args.feature_w, 
+                self.args.logits_w, 
+                self.args.task_w,
+                self.args.features, 
+                self.args.pred_len
+            )
+        elif self.args.model == 'OFA':
+            criterion = torch.nn.L1Loss()
+        else: criterion = torch.nn.MSELoss()
+        
         return criterion
 
     def vali(self, vali_loader, criterion):
         total_loss = []
-        self.model.eval()
+        if self.args.model == 'CALF':
+            self.model.in_layer.eval()
+            self.model.out_layer.eval()
+            self.model.time_proj.eval()
+            self.model.text_proj.eval()
+            
+            criterion = torch.nn.MSELoss()
+        elif self.args.model == 'OFA':
+            self.model.in_layer.eval()
+            self.model.out_layer.eval()
+        else:
+            self.model.eval()
+            
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
@@ -56,17 +77,22 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
+                if self.args.model == 'CALF':
+                    outputs = self.model(batch_x)['outputs_time']
+                elif self.args.model == 'OFA':
+                    outputs = self.model(batch_x)
+                else:
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
@@ -84,7 +110,16 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         else:
             total_loss = np.average(total_loss)
         
-        self.model.train()
+        if self.args.model == 'CALF':
+            self.model.in_layer.train()
+            self.model.out_layer.train()
+            self.model.time_proj.train()
+            self.model.text_proj.train()
+        elif self.args.model == 'OFA':
+            self.model.in_layer.train()
+            self.model.out_layer.train()
+        else: 
+            self.model.train()
         return total_loss
 
     def train(self):
@@ -100,8 +135,13 @@ class Exp_Long_Term_Forecast(Exp_Basic):
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
-        model_optim = self._select_optimizer()
+        if self.args.model == 'CALF':
+            model_optim, loss_optim = self._select_optimizer()
+        else: model_optim = self._select_optimizer()
+            
         criterion = self._select_criterion()
+        lr_scheduler = self._select_lr_scheduler(model_optim)
+        f_dim = -1 if self.args.features == 'MS' else 0
 
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
@@ -115,6 +155,9 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
+                if self.args.model == 'CALF': 
+                    loss_optim.zero_grad()
+                    
                 batch_x = batch_x.float().to(self.device)
 
                 batch_y = batch_y.float().to(self.device)
@@ -126,29 +169,28 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
 
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
+                if self.args.model in ['CALF', 'OFA']:
+                    outputs = self.model(batch_x)
+                else:
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                        f_dim = -1 if self.args.features == 'MS' else 0
-                        outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                        batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                        loss = criterion(outputs, batch_y)
-                        train_loss.append(loss.item())
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
-                    f_dim = -1 if self.args.features == 'MS' else 0
+                
+                # only CALF model has dictionary output
+                if self.args.model != 'CALF':
                     outputs = outputs[:, -self.args.pred_len:, f_dim:]
                     batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                    loss = criterion(outputs, batch_y)
-                    train_loss.append(loss.item())
+                    
+                loss = criterion(outputs, batch_y)
+                train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
                     print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
@@ -165,6 +207,8 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 else:
                     loss.backward()
                     model_optim.step()
+                    if self.args.model == 'CALF':
+                        loss_optim.zero_grad()
 
             print(f"Epoch: {epoch + 1} cost time: { time.time() - epoch_time}")
             train_loss = np.average(train_loss)
@@ -209,18 +253,24 @@ class Exp_Long_Term_Forecast(Exp_Basic):
                 dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
+                
+                if self.args.model == 'CALF':
+                    outputs = self.model(batch_x)['outputs_time']
+                elif self.args.model == 'OFA':
+                    outputs = self.model(batch_x)
+                else:
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if self.args.output_attention:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                            else:
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
                 f_dim = -1 if self.args.features == 'MS' else 0
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]

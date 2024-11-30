@@ -92,6 +92,7 @@ class WinIT:
             inputs = tuple([inputs])
             
         attr = []
+        if additional_forward_args is None: additional_forward_args = ()
         with torch.no_grad():
             y_original = self.format_output(
                 model(*inputs, *additional_forward_args)

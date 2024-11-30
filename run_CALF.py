@@ -11,8 +11,10 @@ def get_parser():
     
     # distillation loss
     parser.add_argument('--task_loss', type=str, default='l1', help='task loss function')
+    parser.add_argument('--feature_loss', type=str, default='l1', help='distillation loss function')
     parser.add_argument('--distill_loss', type=str, default='l1', help='distillation loss function')
     parser.add_argument('--logits_loss', type=str, default='l1', help='logits loss function')
+    parser.add_argument('--output_loss', type=str, default='l1', help='logits loss function')
     
     # the rest here is CALF related arguments
     parser.add_argument('--tmax', type=int, default=20)
@@ -29,6 +31,7 @@ def get_parser():
     parser.add_argument('--task_w', type=float, default=1.0)
     parser.add_argument('--feature_w', type=float, default=0.01)
     parser.add_argument('--logits_w', type=float, default=1.0)
+    parser.add_argument('--output_w', type=float, default=1.0)
     
     # gpt
     parser.add_argument('--gpt_layers', type=int, default=6, help='number of hidden layers in gpt')
@@ -46,6 +49,7 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     args.model = 'CALF'
+    args.output_dict = True
     main(args)
 
 

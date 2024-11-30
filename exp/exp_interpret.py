@@ -94,7 +94,7 @@ class Exp_Interpret:
             explainer = WinTSR(base_explainer)
             
         elif name in ['augmented_occlusion', 'winIT', 'fit']:
-            add_x_mark = args.task_name != 'classification'
+            add_x_mark = args.task_name != 'classification' and args.model not in ['CALF', 'OFA']
             all_inputs = get_total_data(dataloader, device, add_x_mark=add_x_mark)
             
             if name == 'winIT':
@@ -234,11 +234,16 @@ class Exp_Interpret:
             dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float()
             # outputs = model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
             
-            inputs = (batch_x, batch_x_mark)
+            if self.args.model in ['CALF', 'OFA']:
+                inputs = batch_x
+                additional_forward_args = None
+            else: 
+                inputs = (batch_x, batch_x_mark)
+                additional_forward_args = (dec_inp, batch_y_mark)
+                
             # baseline must be a scaler or tuple of tensors with same dimension as input
             baselines = get_baseline(inputs, mode=self.args.baseline_mode)
-            additional_forward_args = (dec_inp, batch_y_mark)
-
+        
             # get attributions
             batch_results, batch_attr = self.evaluate(
                 name, inputs, baselines, 

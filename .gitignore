@@ -2,7 +2,9 @@
 lightning_logs
 checkpoints
 *TimesNet/
-*_TimeLLM/**/checkpoint.pth
+**/*_TimeLLM/**/checkpoint.pth
+**/*_CALF/**/checkpoint.pth
+**/*_OFA/**/checkpoint.pth
 # some file sizes are too large for git
 dataset
 scratch

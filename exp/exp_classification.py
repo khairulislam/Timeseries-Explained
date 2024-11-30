@@ -9,7 +9,7 @@ from torch import optim
 import os, time, warnings
 import numpy as np
 import pandas as pd
-from captum._utils.common import _select_targets
+from utils.cmLoss import cmLoss
 
 warnings.filterwarnings('ignore')
 
@@ -32,7 +32,7 @@ class Exp_Classification(Exp_Basic):
         
         # model init
         initializer = self.model_dict[self.args.model]
-        if self.args.model == 'MICN':
+        if self.args.model in ['CALF', 'OFA', 'MICN']:
             model = initializer.Model(self.args, self.device).float()
         else:
             model = initializer.Model(self.args).float()
@@ -45,19 +45,30 @@ class Exp_Classification(Exp_Basic):
         data_set, data_loader = data_provider(self.args, flag)
         return data_set, data_loader
 
-    def _select_optimizer(self):
-        model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
-        return model_optim
+    # def _select_optimizer(self):
+    #     model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+    #     return model_optim
 
-    def _select_criterion(self):
-        if self.multiclass: criterion = nn.CrossEntropyLoss()
-        else: criterion = nn.BCEWithLogitsLoss()
+    def _select_criterion(self, validation=False):
+        if self.args.model == 'CALF' and not validation:
+            criterion = cmLoss(self.args.feature_loss, 
+                self.args.output_loss, 
+                self.args.task_loss, 
+                self.args.task_name, 
+                self.args.feature_w, 
+                self.args.output_w, 
+                self.args.task_w
+            )
+        else:
+            if self.multiclass: criterion = nn.CrossEntropyLoss()
+            else: criterion = nn.BCEWithLogitsLoss()
             
         return criterion
 
     def vali(self, vali_loader, criterion):
         total_loss = []
         self.model.eval()
+            
         with torch.no_grad():
             for i, (batch_x, label, padding_mask) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
@@ -65,7 +76,12 @@ class Exp_Classification(Exp_Basic):
                 label = label.long() if self.multiclass else label.float()
                 label = label.to(self.device)
 
-                outputs = self.model(batch_x, padding_mask, None, None)
+                if self.args.model == 'CALF':
+                    outputs = self.model(batch_x, padding_mask)['outputs_time']
+                elif self.args.model == 'OFA':
+                    outputs = self.model(batch_x)
+                else:
+                    outputs = self.model(batch_x, padding_mask, None, None)
 
                 pred = outputs.squeeze()
                 loss = criterion(pred, label.squeeze())
@@ -85,7 +101,10 @@ class Exp_Classification(Exp_Basic):
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
-        model_optim = self._select_optimizer()
+        if self.args.model == 'CALF':
+            model_optim, loss_optim = self._select_optimizer()
+        else: model_optim = self._select_optimizer()
+        
         scheduler = ReduceLROnPlateau(
             model_optim, 'min', 
             patience=3, min_lr=1e-6
@@ -102,6 +121,8 @@ class Exp_Classification(Exp_Basic):
             for i, (batch_x, label, padding_mask) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
+                if self.args.model == 'CALF':
+                    loss_optim.zero_grad()
 
                 batch_x = batch_x.float().to(self.device)
                 padding_mask = padding_mask.float().to(self.device)
@@ -109,8 +130,15 @@ class Exp_Classification(Exp_Basic):
                 label = label.long() if self.multiclass else label.float()
                 label = label.to(self.device)
 
-                outputs = self.model(batch_x, padding_mask, None, None)
-                loss = criterion(outputs.squeeze(), label.squeeze(-1))
+                if self.args.model in ['CALF', 'OFA']:
+                    outputs = self.model(batch_x)
+                else:
+                    outputs = self.model(batch_x, padding_mask, None, None)
+                    
+                if self.args.model == 'CALF':
+                    loss = criterion(outputs, label.squeeze(-1))
+                else:
+                    loss = criterion(outputs.squeeze(), label.squeeze(-1))
                 train_loss.append(loss.item())
 
                 if (i + 1) % 100 == 0:
@@ -124,10 +152,12 @@ class Exp_Classification(Exp_Basic):
                 loss.backward()
                 nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=4.0)
                 model_optim.step()
+                if self.args.model == 'CALF':
+                    loss_optim.step()
 
             print(f"Epoch: {epoch + 1} cost time: {time.time() - epoch_time:0.2f}")
             train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_loader, criterion)
+            vali_loss = self.vali(vali_loader, self._select_criterion(validation=True))
             # test_loss, test_accuracy = self.vali(test_loader, criterion)
 
             print(
@@ -159,7 +189,12 @@ class Exp_Classification(Exp_Basic):
                 batch_x = batch_x.float().to(self.device)
                 padding_mask = padding_mask.float().to(self.device)
 
-                outputs = self.model(batch_x, padding_mask, None, None)
+                if self.args.model == 'CALF':
+                    outputs = self.model(batch_x)["outputs_time"]
+                elif self.args.model == 'OFA':
+                    outputs = self.model(batch_x)
+                else:
+                    outputs = self.model(batch_x, padding_mask, None, None)
 
                 preds.append(outputs.detach())
                 trues.append(label)

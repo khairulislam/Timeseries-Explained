@@ -4,7 +4,7 @@ from data.data_factory import data_provider
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, \
     FiLM, LSTM, TCN, SegRNN, iTransformer, TimeLLM, CALF, OFA
-    
+from utils.distillationLoss import DistillationLoss
 
 def stringify_setting(args, complete=False):
     if not complete:
@@ -83,6 +83,31 @@ class Exp_Basic(object):
 
     def _build_model(self):
         raise NotImplementedError
+    
+    def _select_optimizer(self):
+        if self.args.model == 'CALF':
+            param_dict = [
+                {"params": [p for n, p in self.model.named_parameters() if p.requires_grad and '_proj' in n], "lr": 1e-4},
+                {"params": [p for n, p in self.model.named_parameters() if p.requires_grad and '_proj' not in n], "lr": self.args.learning_rate}
+            ]
+            model_optim = torch.optim.Adam([param_dict[1]], lr=self.args.learning_rate)
+            loss_optim = torch.optim.Adam([param_dict[0]], lr=self.args.learning_rate)
+            return model_optim, loss_optim
+        else:
+            model_optim = torch.optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
+            return model_optim
+    
+    def _select_lr_scheduler(self, optimizer):
+        if self.args.model in ['CALF', 'OFA']:
+            return torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=self.args.tmax, 
+                eta_min=1e-8, verbose=True
+            )
+        else:
+            return torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, patience=1, factor=0.1, 
+                verbose=True, min_lr=5e-6
+            )
     
     def load_best_model(self):
         best_model_path = os.path.join(self.output_folder, 'checkpoint.pth')

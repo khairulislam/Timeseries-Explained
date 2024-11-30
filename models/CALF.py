@@ -165,6 +165,7 @@ class Model(nn.Module):
     def __init__(self, configs, device):
         super(Model, self).__init__()
         self.pred_len = configs.pred_len
+        self.output_dict = configs.output_dict
         
         peft_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM, 
@@ -304,6 +305,7 @@ class Model(nn.Module):
                 'intermidiate_time':None,
                 'intermidiate_text':None,
             }
+           
         
         if 'llm_to_attn'  in self.task_type:
             outputs_time , _ = self.basic_attn(outputs_time1 , outputs_time1 , outputs_time1 )
@@ -353,7 +355,9 @@ class Model(nn.Module):
             }
         
         if 'ori' in self.task_type:
-            if self.is_first : print('Orig--' ,self.task_type) ; self.is_first = False 
+            if self.is_first : 
+                # print('Orig--' ,self.task_type) ; 
+                self.is_first = False 
             outputs_time, intermidiate_feat_time = self.gpt2(inputs_embeds=outputs_time1)
             # print(outputs_time.shape , self.task_type )
             
@@ -375,12 +379,16 @@ class Model(nn.Module):
             
             outputs_text = outputs_text * stdev + means
             outputs_time = outputs_time * stdev + means
-            return {
-                'outputs_text': outputs_text,
-                'outputs_time':outputs_time,
-                'intermidiate_time':intermidiate_feat_time,
-                'intermidiate_text':intermidiate_feat_text,
-            }
+            
+            if self.output_dict:
+                return {
+                    'outputs_text': outputs_text,
+                    'outputs_time':outputs_time,
+                    'intermidiate_time':intermidiate_feat_time,
+                    'intermidiate_text':intermidiate_feat_text,
+                }
+            else:
+                return outputs_time
 
         if 'randomInit'  in self.task_type :
             if self.is_first : print('randomInit--' ,self.task_type) ; self.is_first = False 
@@ -433,12 +441,15 @@ class Model(nn.Module):
         outputs_time = self.out_layer(outputs_time)
         outputs_text = self.out_layer(outputs_text)
         
-        return {
-            'outputs_text': outputs_text,
-            'outputs_time':outputs_time,
-            'intermidiate_time':intermidiate_feat_time,
-            'intermidiate_text':intermidiate_feat_text,
-        }
+        if self.output_dict:
+            return {
+                'outputs_text': outputs_text,
+                'outputs_time':outputs_time,
+                'intermidiate_time':intermidiate_feat_time,
+                'intermidiate_text':intermidiate_feat_text,
+            }
+        else:
+            return outputs_time
 
     def imputation(self, x, mask):
         B, L, M = x.shape
