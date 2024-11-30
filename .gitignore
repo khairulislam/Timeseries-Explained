@@ -2,6 +2,7 @@
 lightning_logs
 checkpoints
 *TimesNet/
+*_TimeLLM/**/checkpoint.pth
 # some file sizes are too large for git
 dataset
 scratch

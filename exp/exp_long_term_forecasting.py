@@ -182,7 +182,7 @@ class Exp_Long_Term_Forecast(Exp_Basic):
             adjust_learning_rate(model_optim, epoch + 1, self.args)
 
         end = datetime.now()
-        epochs_run = epoch + early_stopping.early_stop
+        epochs_run = epoch + early_stopping.early_stop + 1
         print(f'Training ended at {end}, time taken {end-start}, per epoch {(end-start)/epochs_run}')
         self.load_best_model()
         return self.model

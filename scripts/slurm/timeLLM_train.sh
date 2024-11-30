@@ -17,7 +17,7 @@ module load cuda-toolkit cudnn-8.9.5_cuda12.x anaconda3
 conda deactivate
 conda activate ml
 
-python run.py \
+python run_TimeLLM.py \
   --task_name long_term_forecast \
   --train \
   --root_path ./dataset/electricity/ \
@@ -27,12 +27,12 @@ python run.py \
   --seq_len 96 \
   --label_len 12 \
   --pred_len 24 \
-  --n_features 1
+  --n_features 1 --disable_progress
 
-python run.py \
+python run_TimeLLM.py \
   --task_name classification \
   --data mimic \
   --train \
   --root_path ./dataset/mimic_iii/ \
   --data_path mimic_iii.pkl \
-  --model TimeLLM --n_features 31 --seq_len 48
+  --model TimeLLM --n_features 31 --seq_len 48 --disable_progress

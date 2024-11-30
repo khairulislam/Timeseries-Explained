@@ -5,16 +5,15 @@ import numpy as np
 import torch, os, time, warnings, json, argparse
 warnings.filterwarnings('ignore')
 
-from run import main, get_basic_parser
+from run import main, get_parser as get_basic_parser
             
 def get_parser():
-    parser = get_basic_parser("OFA LLM")
+    parser = get_basic_parser()
     
     parser.add_argument(
         '--model_id', default='ori', choices=['ori', 'removeLLM', 
         'randomInit', 'llm_to_trsf', 'llm_to_attn']
     )
-    parser.add_argument('--model', type=str, default='OFA', choices=['OFA'])
 
     parser.add_argument('--gpt_layers', type=int, default=6)
     parser.add_argument('--is_gpt', type=int, default=1)
@@ -35,4 +34,5 @@ def get_parser():
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
+    args.model = 'OFA'
     main(args)
