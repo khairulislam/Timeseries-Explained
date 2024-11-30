@@ -5,7 +5,7 @@ warnings.filterwarnings('ignore')
 from run import main, get_parser as get_basic_parser
 
 def load_content(args):
-    df = pd.read_csv(os.path.join(args.root_path, 'prompt_bank.csv'))
+    df = pd.read_csv(os.path.join('data', 'prompt_bank.csv'))
     data_name = args.data_path.split('.')[0] 
     content = df[df['data']==data_name]['prompt'].values[0]
     return content
