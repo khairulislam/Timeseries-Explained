@@ -9,6 +9,9 @@
 #SBATCH --mail-user=mi3se@virginia.edu
 #SBATCH --mem=24GB
 
+# https://www.cs.virginia.edu/wiki/doku.php?id=compute_slurm
+# https://www.cs.virginia.edu/wiki/doku.php?id=compute_resourcesb
+
 source /etc/profile.d/modules.sh
 source ~/.bashrc
 

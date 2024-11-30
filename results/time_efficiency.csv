@@ -477,3 +477,5 @@ mimic_iii,iTransformer,2,gatemask,2024-11-29 16:49:15.554474,0:03:28.348402,iTra
 mimic_iii,iTransformer,3,gatemask,2024-11-29 16:52:46.886137,0:03:29.430826,iTransformer_mimic_iii_ftMS_sl24_ll48_pl0_dm128_nh4
 electricity,CALF,1,feature_ablation,2024-11-30 12:37:22.519042,0:18:37.015216,CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4
 electricity,CALF,1,occlusion,2024-11-30 12:55:57.598268,0:18:34.829119,CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4
+electricity,CALF,1,augmented_occlusion,2024-11-30 13:14:48.655744,0:18:50.834599,CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4
+electricity,CALF,1,feature_permutation,2024-11-30 13:33:32.847619,0:18:43.965493,CALF_electricity_ftS_sl96_ll12_pl24_dm768_nh4

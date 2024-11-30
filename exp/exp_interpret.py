@@ -139,12 +139,16 @@ class Exp_Interpret:
                 results.extend(rows)
                 if results_df.shape[0]>0: 
                     min_batch_index = results_df['batch_index'].max() + 1
+                else:
+                    min_batch_index = 0
             else:
                 min_batch_index = 0
                 # create and write header row if the file doesn't exists or it is to be overwritten
                 result_file = open(batch_filename, 'w', newline='')
                 writer = csv.writer(result_file) 
                 writer.writerow(results[0])
+        else:
+            min_batch_index = 0
             
         attrs = []
         if min_batch_index>0:
@@ -165,7 +169,11 @@ class Exp_Interpret:
             inputs = batch_x
             # baseline must be a scaler or tuple of tensors with same dimension as input
             baselines = get_baseline(inputs, mode=self.args.baseline_mode)
-            additional_forward_args = (padding_mask, None, None)
+            
+            if self.args.model in ['CALF', 'OFA']:
+                additional_forward_args = None
+            else:
+                additional_forward_args = (padding_mask, None, None)
 
             # get attributions
             batch_results, batch_attr = self.evaluate(

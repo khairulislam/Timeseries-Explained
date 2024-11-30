@@ -40,9 +40,6 @@ def main(args):
 
         exp.load_best_model()
 
-        # Some models don't work with gradient based explainers
-        # explainers = ['deep_lift', 'gradient_shap', 'integrated_gradients']
-
         interpreter = Exp_Interpret(exp, dataloader) 
         interpreter.interpret(dataloader)
         

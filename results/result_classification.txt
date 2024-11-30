@@ -442,3 +442,21 @@ flag val, acc 0.90518, f1 0.13492, auc 0.78892
 CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
 flag test, acc 0.90257, f1 0.13178, auc 0.76547
 
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag val, acc 0.90039, f1 0.01717, auc 0.76959
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag test, acc 0.90257, f1 0.04274, auc 0.75354
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag val, acc 0.90692, f1 0.17054, auc 0.74938
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag test, acc 0.90866, f1 0.22222, auc 0.76480
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag val, acc 0.90387, f1 0.15970, auc 0.79112
+
+CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
+flag test, acc 0.90692, f1 0.19549, auc 0.77758
+

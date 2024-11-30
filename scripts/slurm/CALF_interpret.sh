@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-#SBATCH --job-name="calf_electricity_interpret"
-#SBATCH --output=results/outputs/CALF_electricity_interpret.out
+#SBATCH --job-name="mimic_interpret"
+#SBATCH --output=results/outputs/CALF_mimic_iii_interpret.out
 #SBATCH --partition=gpu
 #SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
+#SBATCH --mem-per-gpu=11G
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=mi3se@virginia.edu
-#SBATCH --mem=24GB
+#SBATCH --mem=32GB
 
 source /etc/profile.d/modules.sh
 source ~/.bashrc
@@ -27,4 +28,14 @@ python interpret_CALF.py\
   --label_len 12 \
   --pred_len 24 \
   --n_features 1 --d_model 768\
-  --overwrite --disable_progress
+  --disable_progress
+
+python interpret_CALF.py \
+  --explainers feature_ablation occlusion augmented_occlusion feature_permutation winIT gatemask wtsr integrated_gradients gradient_shap\
+  --task_name classification \
+  --data mimic \
+  --root_path ./dataset/mimic_iii/ \
+  --data_path mimic_iii.pkl \
+  --metrics auc accuracy cross_entropy \
+  --model CALF --n_features 31 --seq_len 48\
+  --d_model 768 --overwrite --disable_progress --batch_size 16

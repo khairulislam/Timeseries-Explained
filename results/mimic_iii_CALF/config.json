@@ -5,7 +5,7 @@
     "model": "CALF",
     "seed": 2024,
     "itrs": 3,
-    "itr_no": 1,
+    "itr_no": 3,
     "data": "mimic",
     "result_path": "./results",
     "root_path": "./dataset/mimic_iii/",

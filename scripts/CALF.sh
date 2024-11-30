@@ -31,4 +31,14 @@ python interpret_CALF.py\
   --label_len 12 \
   --pred_len 24 \
   --n_features 1 --d_model 768\
-  --itr_no 1 --dry_run --batch_size 16
+  --batch_size 16
+
+python interpret_CALF.py \
+  --explainers feature_ablation occlusion augmented_occlusion feature_permutation integrated_gradients gradient_shap winIT gatemask wtsr \
+  --task_name classification \
+  --data mimic \
+  --root_path ./dataset/mimic_iii/ \
+  --data_path mimic_iii.pkl \
+  --metrics auc accuracy cross_entropy \
+  --model CALF --n_features 31 --seq_len 48\
+  --d_model 768 --overwrite --batch_size 16
