@@ -1,0 +1,14 @@
+
+>>>> itr_no: 3, seed: 608 <<<<<<
+Use GPU: cuda:0
+Dead patients 1832, percentage 9.96.
+train 18390
+Dead patients 229, percentage 9.96.
+test 2299
+model_id  ori
+Experiments will be saved in ./results/mimic_iii_CALF/3
+Dead patients 229, percentage 9.96.
+test 2299
+Loading model from ./results/mimic_iii_CALF/3/checkpoint.pth
+
+Running feature_ablation from 2024-12-01 07:20:45.063750

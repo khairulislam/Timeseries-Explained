@@ -4,7 +4,6 @@
 #SBATCH --partition=gpu
 #SBATCH --time=24:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem-per-gpu=11G
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=mi3se@virginia.edu
 #SBATCH --mem=32GB
@@ -31,11 +30,12 @@ python interpret_CALF.py\
   --disable_progress
 
 python interpret_CALF.py \
-  --explainers feature_ablation occlusion augmented_occlusion feature_permutation winIT gatemask wtsr integrated_gradients gradient_shap\
+  --explainers feature_ablation occlusion augmented_occlusion feature_permutation integrated_gradients gradient_shap winIT gatemask wtsr\
   --task_name classification \
   --data mimic \
   --root_path ./dataset/mimic_iii/ \
   --data_path mimic_iii.pkl \
   --metrics auc accuracy cross_entropy \
   --model CALF --n_features 31 --seq_len 48\
-  --d_model 768 --overwrite --disable_progress --batch_size 16
+  --d_model 768 --overwrite \
+  --disable_progress --batch_size 16
