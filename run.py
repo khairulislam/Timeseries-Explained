@@ -62,7 +62,7 @@ def main(args):
     config_filepath = os.path.join(args.result_path, stringify_setting(args), 'config.json')
     args.seeds = [int(seed) for seed in experiment_seeds]
     with open(config_filepath, 'w') as output_file:
-        json.dump(vars(args), output_file, indent=4)
+        json.dump(vars(args), output_file, indent=4, default=str)
     
     torch.cuda.empty_cache()
 
@@ -147,6 +147,8 @@ def get_parser():
     parser.add_argument('--p_hidden_dims', type=int, nargs='+', default=[128, 128],
                         help='hidden layer dimensions of projector (List)')
     parser.add_argument('--p_hidden_layers', type=int, default=2, help='number of hidden layers in projector')
+    
+    parser.add_argument('--augmentation_ratio', type=int, default=0, help="How many times to augment")
     
     # LLM specific params
     
