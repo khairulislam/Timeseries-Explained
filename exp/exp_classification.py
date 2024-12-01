@@ -22,7 +22,11 @@ class Exp_Classification(Exp_Basic):
         # model input depends on data
         train_data, _ = self._get_data(flag='train')
         test_data, _ = self._get_data(flag='test')
-        self.args.seq_len = max(train_data.max_seq_len, test_data.max_seq_len)
+        
+        #TODO: check if causes any issue. This part is different from the original repo
+        # but I would like the seq len to be consistent
+        # self.args.seq_len = max(train_data.max_seq_len, test_data.max_seq_len)
+        
         self.args.pred_len = 0
         
         #TODO: make these more generalized

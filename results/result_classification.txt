@@ -460,3 +460,57 @@ flag val, acc 0.90387, f1 0.15970, auc 0.79112
 CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4  
 flag test, acc 0.90692, f1 0.19549, auc 0.77758
 
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.75122, f1 0.33766, auc 0.68551
+
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.75122, f1 0.33766, auc 0.68551
+
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.73659, f1 0.27027, auc 0.69654
+
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.73659, f1 0.27027, auc 0.69654
+
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.74146, f1 0.18462, auc 0.73578
+
+DLinear_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.74146, f1 0.18462, auc 0.73578
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.74634, f1 0.40909, auc 0.67864
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.74634, f1 0.40909, auc 0.67864
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.72195, f1 0.27848, auc 0.68338
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.72195, f1 0.27848, auc 0.68338
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.71220, f1 0.14493, auc 0.62672
+
+SegRNN_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.71220, f1 0.14493, auc 0.62672
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.72195, f1 0.06557, auc 0.69962
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.72195, f1 0.06557, auc 0.69962
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.70732, f1 0.42308, auc 0.66892
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.70732, f1 0.42308, auc 0.66892
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag val, acc 0.62927, f1 0.43284, auc 0.65529
+
+iTransformer_Heartbeat_ftMS_sl96_ll48_pl0_dm128_nh4  
+flag test, acc 0.62927, f1 0.43284, auc 0.65529
+

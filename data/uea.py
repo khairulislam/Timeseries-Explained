@@ -33,6 +33,7 @@ def collate_fn(data, max_len=None):
     for i in range(batch_size):
         end = min(lengths[i], max_len)
         X[i, :end, :] = features[i][:end, :]
+        # X[i, :end, :] = features[i][-end:, :] # take recent times
 
     targets = torch.stack(labels, dim=0)  # (batch_size, num_labels)
 
