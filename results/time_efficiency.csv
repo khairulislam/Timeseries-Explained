@@ -591,3 +591,5 @@ mimic_iii,CALF,2,winIT,2024-12-01 15:59:20.210917,1:45:57.391761,CALF_mimic_iii_
 mimic_iii,CALF,3,winIT,2024-12-01 16:02:52.780409,1:49:43.411620,CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4
 mimic_iii,CALF,2,gatemask,2024-12-01 16:18:49.326100,0:19:28.924003,CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4
 mimic_iii,CALF,3,gatemask,2024-12-01 16:23:27.946324,0:20:34.988306,CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4
+mimic_iii,CALF,2,wtsr,2024-12-01 17:19:47.962932,1:00:58.404548,CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4
+mimic_iii,CALF,3,wtsr,2024-12-01 17:23:37.875538,1:00:09.723321,CALF_mimic_iii_ftMS_sl48_ll48_pl0_dm768_nh4

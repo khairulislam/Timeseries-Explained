@@ -9,28 +9,25 @@ int_metric_map = {
     'electricity': ['mae'],
     'traffic': ['mae'],
     'mimic_iii': ['auc'],
-    'Heartbeat': ['auc']
+    # 'Heartbeat': ['auc']
 }
 
 test_metric_map = {
     'electricity': ['mae', 'mse'],
     'traffic': ['mae', 'mse'],
-    'mimic_iii': ['auc', 'accuracy', 'cross_entropy'],
-    'Heartbeat': ['auc', 'accuracy', 'f1']
+    'mimic_iii': ['auc', 'accuracy', 'f1'],
+    # 'Heartbeat': ['auc', 'accuracy', 'f1']
 }
 
-datasets = ['electricity', 'traffic', 'mimic_iii']
-models = ['DLinear', 'MICN', 'SegRNN', 'iTransformer']
-
-datasets = ['Heartbeat']
-models = ['DLinear']
+datasets = ['electricity', 'mimic_iii']
+models = ['DLinear', 'MICN', 'SegRNN', 'iTransformer', 'CALF']
 
 attr_methods = [
     'feature_ablation', 'augmented_occlusion', 
     'feature_permutation',
-    'integrated_gradients', 'gradient_shap', # 'dyna_mask',
+    # 'integrated_gradients', 'gradient_shap', # 'dyna_mask',
     'winIT', # 'tsr', 
-    # 'gatemask', 
+    'gatemask', 
     'wtsr'
 ]
 
@@ -61,7 +58,7 @@ def create_result_file(root='./results'):
             for metric in int_metric_map[dataset]:
                 for model in models:
                     for itr_no in range(1, NUM_ITERATIONS+1):
-                        df = pd.read_csv(f'{root}/{dataset}_{model}_sl_96/{itr_no}/{attr_method}.csv')
+                        df = pd.read_csv(f'{root}/{dataset}_{model}/{itr_no}/{attr_method}.csv')
                         # df = reduce_df(df)
                         values = df[df['metric']==metric][['area', 'comp', 'suff']].values
                         
@@ -86,7 +83,7 @@ for dataset in datasets:
             
             scores = 0
             for itr_no in range(1, NUM_ITERATIONS+1):
-                df = pd.read_csv(f'results/{dataset}_{model}_sl_96/{itr_no}/test_metrics.csv')
+                df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/test_metrics.csv')
                 score = df[df['metric']==metric]['score'].values[0]
                 scores += score
                 
@@ -137,7 +134,7 @@ for dataset in datasets:
                     scores = []
                     dfs = []
                     for itr_no in range(1, NUM_ITERATIONS+1):
-                        df = pd.read_csv(f'results/{dataset}_{model}_sl_96/{itr_no}/{attr_method}.csv') 
+                        df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
                     
                         df = df[df['metric']==metric][['area', metric_type]]
                         dfs.append(df)
@@ -158,38 +155,38 @@ for dataset in datasets:
             print('\\\\')
         print('\\hline\n')
 
-for dataset in datasets:
-    # use the first or second on
-    for metric in int_metric_map[dataset]:
-        print(f'Dataset {dataset}, metric {metric}.\n')
-        print(f" & {' & '.join(models)} \\\\ \\hline")
+# for dataset in datasets:
+#     # use the first or second on
+#     for metric in int_metric_map[dataset]:
+#         print(f'Dataset {dataset}, metric {metric}.\n')
+#         print(f" & {' & '.join(models)} \\\\ \\hline")
         
-        for attr_method in attr_methods:
-            print(f'{short_form[attr_method]} ', end='')
-            for model in models:
-                scores = []
-                for metric_type in ['comp', 'suff']:
-                    dfs = []
-                    for itr_no in range(1, NUM_ITERATIONS+1):
-                        df = pd.read_csv(f'results/{dataset}_{model}_sl_96/{itr_no}/{attr_method}.csv') 
+#         for attr_method in attr_methods:
+#             print(f'{short_form[attr_method]} ', end='')
+#             for model in models:
+#                 scores = []
+#                 for metric_type in ['comp', 'suff']:
+#                     dfs = []
+#                     for itr_no in range(1, NUM_ITERATIONS+1):
+#                         df = pd.read_csv(f'results/{dataset}_{model}/{itr_no}/{attr_method}.csv') 
                     
-                        df = df[df['metric']==metric][['area', metric_type]]
-                        dfs.append(df)
+#                         df = df[df['metric']==metric][['area', metric_type]]
+#                         dfs.append(df)
                 
-                    df = pd.concat(dfs, axis=0)
-                    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-                    if metric in ['auc', 'accuracy']:
-                        df[metric_type] = 1-df[metric_type]
+#                     df = pd.concat(dfs, axis=0)
+#                     df.replace([np.inf, -np.inf], np.nan, inplace=True)
+#                     if metric in ['auc', 'accuracy']:
+#                         df[metric_type] = 1-df[metric_type]
                     
-                    score = df[metric_type].mean() 
-                    scores.append(score)
+#                     score = df[metric_type].mean() 
+#                     scores.append(score)
             
-                # take geometric mean of the two scores
-                comp, suff = scores[0], scores[1]
-                score = comp * (1-suff) / (comp + (1-suff))
+#                 # take geometric mean of the two scores
+#                 comp, suff = scores[0], scores[1]
+#                 score = comp * (1-suff) / (comp + (1-suff))
                 
-                if dataset == 'mimic_iii': print_row(score, decimals=3)
-                else: print_row(score, decimals=1)
+#                 if dataset == 'mimic_iii': print_row(score, decimals=3)
+#                 else: print_row(score, decimals=1)
             
-            print('\\\\')
-        print('\\hline\n')
+#             print('\\\\')
+#         print('\\hline\n')

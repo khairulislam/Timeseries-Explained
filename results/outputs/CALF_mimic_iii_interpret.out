@@ -114,3 +114,18 @@ Experiment ended at 2024-12-01 16:18:49.326100. Total time taken 0:19:28.924003.
 
 
 Running wtsr from 2024-12-01 16:18:49.558384
+Experiment ended at 2024-12-01 17:19:47.962932. Total time taken 1:00:58.404548.
+           metric   area      comp      suff
+0        accuracy  0.050  0.983073  0.986979
+1        accuracy  0.075  0.982856  0.990668
+2        accuracy  0.100  0.982856  0.991536
+3        accuracy  0.150  0.982422  0.991753
+4             auc  0.050  0.217092  0.227050
+5             auc  0.075  0.203848  0.227621
+6             auc  0.100  0.192403  0.227282
+7             auc  0.150  0.173047  0.228935
+8   cross_entropy  0.050  0.119390  0.117923
+9   cross_entropy  0.075  0.124812  0.118516
+10  cross_entropy  0.100  0.127602  0.119504
+11  cross_entropy  0.150  0.131711  0.119878
+
