@@ -3,7 +3,7 @@ import torch
 from data.data_factory import data_provider
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, \
-    FiLM, LSTM, TCN, SegRNN, iTransformer, TimeLLM, CALF, OFA
+    FiLM, LSTM, TCN, SegRNN, iTransformer, TimeLLM, CALF, OFA, TimeMixer, TSMixer, TimeXer, MultiPatchFormer
 from utils.distillationLoss import DistillationLoss
 
 def stringify_setting(args, complete=False):
@@ -32,7 +32,7 @@ def stringify_setting(args, complete=False):
 dual_input_users = [
     'iTransformer', 'Autoformer', 'ETSformer', 'FEDformer', 
     'Informer', 'Nonstationary_Transformer', 'Reformer', 
-    'RNN', 'TimesNet', 'Transformer'
+    'RNN', 'TimesNet', 'Transformer', 'TimeXer', 'TimeMixer'
 ]
 
 class Exp_Basic(object):
@@ -56,6 +56,10 @@ class Exp_Basic(object):
         'TCN': TCN,
         'SegRNN': SegRNN,
         'iTransformer': iTransformer,
+        'TimeMixer': TimeMixer,
+        'TSMixer': TSMixer,
+        'TimeXer': TimeXer,
+        'MultiPatchFormer': MultiPatchFormer,
         'TimeLLM': TimeLLM,
         'CALF': CALF,
         'OFA': OFA
